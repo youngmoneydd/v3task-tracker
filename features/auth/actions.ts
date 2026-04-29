@@ -58,9 +58,19 @@ export async function registerUser(input: { email: string; password: string; nam
     return { ok: true as const };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    console.error("registerUser failed", error);
+
     if (message.includes("P1001")) {
       return { ok: false as const, error: "Нет подключения к базе данных. Проверьте PostgreSQL и DATABASE_URL." };
     }
+
+    if (message.includes("DIRECT_URL")) {
+      return {
+        ok: false as const,
+        error: "Сервер не настроен: отсутствует DIRECT_URL в переменных окружения Vercel.",
+      };
+    }
+
     return { ok: false as const, error: "Не удалось создать аккаунт. Попробуйте еще раз." };
   }
 }
