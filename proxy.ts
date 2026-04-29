@@ -9,5 +9,5 @@ const proxy = withAuth({
 export default proxy;
 
 export const config = {
-  matcher: ["/inbox/:path*", "/today/:path*", "/upcoming/:path*", "/calendar/:path*", "/kanban/:path*", "/analytics/:path*", "/settings/:path*", "/projects/:path*"],
+  matcher: ["/inbox/:path*", "/today/:path*", "/upcoming/:path*", "/calendar/:path*", "/kanban/:path*", "/matrix/:path*", "/analytics/:path*", "/settings/:path*", "/projects/:path*"],
 };

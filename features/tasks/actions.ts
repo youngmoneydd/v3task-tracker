@@ -10,6 +10,7 @@ export async function createTaskAction(input: unknown) {
   revalidatePath("/today");
   revalidatePath("/upcoming");
   revalidatePath("/kanban");
+  revalidatePath("/matrix");
   revalidatePath("/calendar");
   revalidatePath("/analytics");
   return result;
@@ -21,6 +22,7 @@ export async function updateTaskAction(input: unknown) {
   revalidatePath("/today");
   revalidatePath("/upcoming");
   revalidatePath("/kanban");
+  revalidatePath("/matrix");
   revalidatePath("/calendar");
   revalidatePath("/analytics");
   return result;
@@ -32,6 +34,7 @@ export async function deleteTaskAction(taskId: string) {
   revalidatePath("/today");
   revalidatePath("/upcoming");
   revalidatePath("/kanban");
+  revalidatePath("/matrix");
   revalidatePath("/calendar");
   revalidatePath("/analytics");
   return result;

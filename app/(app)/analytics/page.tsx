@@ -3,10 +3,13 @@ import { endOfMonth, endOfWeek, endOfToday, startOfMonth, startOfToday, startOfW
 import { AnalyticsCards } from "@/components/analytics/analytics-cards";
 import { prisma } from "@/db/client";
 import { getCurrentUserContext } from "@/features/tasks/service";
+import { translate } from "@/lib/i18n/messages";
+import { getServerLang } from "@/lib/i18n/server";
 
 export default async function AnalyticsPage() {
   const ctx = await getCurrentUserContext();
   if (!ctx) return null;
+  const lang = await getServerLang();
 
   const baseWhere = { userId: ctx.userId, workspaceId: ctx.workspaceId };
   const [completedToday, completedWeek, completedMonth, overdue, sessions] = await Promise.all([
@@ -21,8 +24,9 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Analytics</h2>
+      <h2 className="text-2xl font-semibold">{translate(lang, "analytics")}</h2>
       <AnalyticsCards
+        lang={lang}
         completedToday={completedToday}
         completedWeek={completedWeek}
         completedMonth={completedMonth}

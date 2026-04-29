@@ -6,6 +6,8 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-p
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 
 import { completePomodoroAction, createTaskAction, deleteTaskAction, updateTaskAction } from "@/features/tasks/actions";
+import type { MessageKey } from "@/lib/i18n/messages";
+import { useAppLang } from "@/lib/use-app-lang";
 
 type TaskWithMeta = Task & {
   taskTags: { tag: Tag }[];
@@ -13,12 +15,15 @@ type TaskWithMeta = Task & {
   project?: Project | null;
 };
 
-type ViewMode = "list" | "today" | "upcoming" | "calendar" | "kanban";
+type ViewMode = "list" | "today" | "upcoming" | "calendar" | "kanban" | "matrix";
+type SmartFilter = "all" | "today" | "overdue" | "no-date" | "high";
+type Translator = (key: MessageKey) => string;
 
 export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: ViewMode }) {
+  const { t } = useAppLang();
   const [title, setTitle] = useState("");
   const [selectedTask, setSelectedTask] = useState<TaskWithMeta | null>(null);
-  const [smartFilter, setSmartFilter] = useState<"all" | "today" | "overdue" | "no-date" | "high">("all");
+  const [smartFilter, setSmartFilter] = useState<SmartFilter>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
@@ -35,11 +40,11 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
 
   const groupedByDate = useMemo(() => {
     return tasks.reduce<Record<string, TaskWithMeta[]>>((acc, task) => {
-      const key = task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : "No date";
+      const key = task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : t("noDate");
       acc[key] = [...(acc[key] ?? []), task];
       return acc;
     }, {});
-  }, [tasks]);
+  }, [tasks, t]);
 
   const byStatus = useMemo(
     () =>
@@ -64,6 +69,19 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
     if (tagFilter !== "all") result = result.filter((task) => task.taskTags.some((tt) => tt.tag.name === tagFilter));
     return result;
   }, [mode, tasks, todayTasks, smartFilter, projectFilter, tagFilter]);
+
+  const matrix = useMemo(() => {
+    const isImportant = (task: TaskWithMeta) => task.priority === "high" || task.priority === "urgent";
+    const isUrgent = (task: TaskWithMeta) =>
+      Boolean(task.dueDate && (isToday(task.dueDate) || isBefore(task.dueDate, startOfDay(new Date()))));
+
+    return {
+      doNow: filtered.filter((task) => isImportant(task) && isUrgent(task)),
+      schedule: filtered.filter((task) => isImportant(task) && !isUrgent(task)),
+      delegate: filtered.filter((task) => !isImportant(task) && isUrgent(task)),
+      eliminate: filtered.filter((task) => !isImportant(task) && !isUrgent(task)),
+    };
+  }, [filtered]);
 
   const projectOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -119,47 +137,47 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          className="w-full rounded-xl border px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-          placeholder="Quick add task..."
+          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+          placeholder={t("quickAdd")}
         />
-        <button onClick={createNewTask} disabled={isPending} className="rounded-xl bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
-          Add
+        <button onClick={createNewTask} disabled={isPending} className="rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 disabled:opacity-70 dark:bg-violet-500">
+          {t("add")}
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-        <KpiCard title="All tasks" value={tasks.length} />
-        <KpiCard title="Today" value={todayTasks.length} />
-        <KpiCard title="Overdue" value={overdueCount} />
-        <KpiCard title="Done" value={tasks.filter((t) => t.status === "done").length} />
+        <KpiCard title={t("allTasks")} value={tasks.length} />
+        <KpiCard title={t("today")} value={todayTasks.length} />
+        <KpiCard title={t("overdue")} value={overdueCount} />
+        <KpiCard title={t("done")} value={tasks.filter((task) => task.status === "done").length} />
       </div>
 
       <div className="flex flex-wrap gap-2">
         {[
-          ["all", "All"],
-          ["today", "Today"],
-          ["overdue", "Overdue"],
-          ["no-date", "No date"],
-          ["high", "High priority"],
+          ["all", t("all")],
+          ["today", t("today")],
+          ["overdue", t("overdue")],
+          ["no-date", t("noDate")],
+          ["high", t("highPriority")],
         ].map(([id, label]) => (
           <button
             key={id}
-            onClick={() => setSmartFilter(id as "all" | "today" | "overdue" | "no-date" | "high")}
-            className={`rounded-lg border px-3 py-1 text-xs ${smartFilter === id ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : ""}`}
+            onClick={() => setSmartFilter(id as SmartFilter)}
+            className={`rounded-lg border px-3 py-1 text-xs transition ${smartFilter === id ? "border-violet-500 bg-violet-600 text-white dark:bg-violet-500" : "dark:border-slate-700"}`}
           >
             {label}
           </button>
         ))}
-        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800">
-          <option value="all">All projects</option>
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
+          <option value="all">{t("allProjects")}</option>
           {projectOptions.map(([id, name]) => (
             <option value={id} key={id}>
               {name}
             </option>
           ))}
         </select>
-        <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800">
-          <option value="all">All tags</option>
+        <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
+          <option value="all">{t("allTags")}</option>
           {tagOptions.map((name) => (
             <option value={name} key={name}>
               {name}
@@ -178,14 +196,15 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
         }}
         onStop={() => setIsTimerRunning(false)}
         focusTaskId={focusTaskId}
+        t={t}
       />
 
       {mode === "calendar" && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {Object.entries(groupedByDate).map(([date, dateTasks]) => (
-            <div key={date} className="rounded-xl border p-3 dark:border-slate-700">
+            <div key={date} className="rounded-xl border p-3 shadow-sm dark:border-slate-700">
               <h3 className="mb-2 text-sm font-semibold">{date}</h3>
-              <TaskRows tasks={dateTasks} onDelete={deleteTaskAction} onToggle={moveTask} />
+              <TaskRows tasks={dateTasks} onDelete={deleteTaskAction} onToggle={moveTask} t={t} />
             </div>
           ))}
         </div>
@@ -197,8 +216,8 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
             {Object.entries(byStatus).map(([status, statusTasks]) => (
               <Droppable key={status} droppableId={status}>
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className="rounded-xl border p-3 dark:border-slate-700">
-                    <h3 className="mb-3 text-sm font-semibold">{status}</h3>
+                  <div ref={provided.innerRef} {...provided.droppableProps} className="rounded-xl border p-3 shadow-sm dark:border-slate-700">
+                    <h3 className="mb-3 text-sm font-semibold">{statusLabel(status as TaskStatus, t)}</h3>
                     <div className="space-y-2">
                       {statusTasks.map((task, idx) => (
                         <Draggable draggableId={task.id} index={idx} key={task.id}>
@@ -207,7 +226,7 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
                               ref={draggable.innerRef}
                               {...draggable.draggableProps}
                               {...draggable.dragHandleProps}
-                              className="rounded-lg border p-2 text-sm dark:border-slate-700"
+                              className="rounded-lg border border-slate-200 p-2 text-sm transition hover:border-violet-300 hover:shadow-sm dark:border-slate-700 dark:hover:border-violet-500"
                             >
                               {task.title}
                             </div>
@@ -224,6 +243,15 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
         </DragDropContext>
       )}
 
+      {mode === "matrix" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <MatrixQuadrant title={t("quadrantDo")} tasks={matrix.doNow} onDelete={deleteTaskAction} onToggle={moveTask} t={t} />
+          <MatrixQuadrant title={t("quadrantSchedule")} tasks={matrix.schedule} onDelete={deleteTaskAction} onToggle={moveTask} t={t} />
+          <MatrixQuadrant title={t("quadrantDelegate")} tasks={matrix.delegate} onDelete={deleteTaskAction} onToggle={moveTask} t={t} />
+          <MatrixQuadrant title={t("quadrantEliminate")} tasks={matrix.eliminate} onDelete={deleteTaskAction} onToggle={moveTask} t={t} />
+        </div>
+      )}
+
       {(mode === "list" || mode === "today" || mode === "upcoming") && (
         <TaskRows
           tasks={filtered}
@@ -236,6 +264,7 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
             setSecondsLeft(25 * 60);
             setIsTimerRunning(true);
           }}
+          t={t}
         />
       )}
 
@@ -262,6 +291,7 @@ function TaskRows({
   onPomodoro,
   onEdit,
   onFocus,
+  t,
 }: {
   tasks: TaskWithMeta[];
   onDelete: (id: string) => Promise<{ ok: boolean; error?: string }>;
@@ -269,40 +299,41 @@ function TaskRows({
   onPomodoro?: (taskId: string | null, durationSec?: number) => Promise<{ ok: boolean }>;
   onEdit?: (task: TaskWithMeta) => void;
   onFocus?: (taskId: string) => void;
+  t: Translator;
 }) {
   const [, startTransition] = useTransition();
   if (!tasks.length) {
-    return <div className="rounded-xl border border-dashed p-4 text-sm text-slate-500 dark:border-slate-700">No tasks yet</div>;
+    return <div className="rounded-xl border border-dashed p-4 text-sm text-slate-500 dark:border-slate-700">{t("noTasksYet")}</div>;
   }
   return (
     <div className="space-y-2">
       {tasks.map((task) => (
-        <div key={task.id} className="rounded-xl border p-3 dark:border-slate-700">
+        <div key={task.id} className="rounded-xl border border-slate-200 p-3 shadow-sm transition hover:border-violet-300 dark:border-slate-700 dark:hover:border-violet-500">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="font-medium">{task.title}</p>
-              <p className="text-xs text-slate-500">{task.priority} · {task.status}</p>
+              <p className="text-xs text-slate-500">{priorityLabel(task.priority, t)} · {statusLabel(task.status, t)}</p>
             </div>
             <div className="flex gap-2">
-              <button className="rounded border px-2 py-1 text-xs" onClick={() => onToggle(task.id, task.status === "done" ? "todo" : "done")}>
-                {task.status === "done" ? "Uncomplete" : "Complete"}
+              <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => onToggle(task.id, task.status === "done" ? "todo" : "done")}>
+                {task.status === "done" ? t("uncomplete") : t("complete")}
               </button>
-              <button className="rounded border px-2 py-1 text-xs" onClick={() => startTransition(async () => { await onDelete(task.id); })}>
-                Delete
+              <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => startTransition(async () => { await onDelete(task.id); })}>
+                {t("delete")}
               </button>
               {onEdit && (
-                <button className="rounded border px-2 py-1 text-xs" onClick={() => onEdit(task)}>
-                  Edit
+                <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => onEdit(task)}>
+                  {t("edit")}
                 </button>
               )}
               {onFocus && (
-                <button className="rounded border px-2 py-1 text-xs" onClick={() => onFocus(task.id)}>
-                  Focus
+                <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => onFocus(task.id)}>
+                  {t("focus")}
                 </button>
               )}
               {onPomodoro && (
-                <button className="rounded border px-2 py-1 text-xs" onClick={() => startTransition(async () => { await onPomodoro(task.id, 1500); })}>
-                  +Pomodoro
+                <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => startTransition(async () => { await onPomodoro(task.id, 1500); })}>
+                  {t("addPomodoro")}
                 </button>
               )}
             </div>
@@ -315,7 +346,7 @@ function TaskRows({
 
 function KpiCard({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-xl border p-3 dark:border-slate-700">
+    <div className="rounded-xl border border-slate-200 p-3 shadow-sm dark:border-slate-700">
       <p className="text-xs text-slate-500">{title}</p>
       <p className="text-xl font-semibold">{value}</p>
     </div>
@@ -328,26 +359,28 @@ function PomodoroWidget({
   onStart,
   onStop,
   focusTaskId,
+  t,
 }: {
   isRunning: boolean;
   secondsLeft: number;
   onStart: (taskId: string | null) => void;
   onStop: () => void;
   focusTaskId: string | null;
+  t: Translator;
 }) {
   const min = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const sec = String(secondsLeft % 60).padStart(2, "0");
   return (
-    <div className="rounded-xl border p-3 dark:border-slate-700">
-      <p className="text-sm font-semibold">Focus mode</p>
+    <div className="rounded-xl border border-slate-200 p-3 shadow-sm dark:border-slate-700">
+      <p className="text-sm font-semibold">{t("focusMode")}</p>
       <p className="text-3xl font-bold">{min}:{sec}</p>
-      <p className="text-xs text-slate-500">Task: {focusTaskId ?? "not selected"}</p>
+      <p className="text-xs text-slate-500">{t("taskLabel")}: {focusTaskId ?? t("notSelected")}</p>
       <div className="mt-2 flex gap-2">
-        <button className="rounded border px-3 py-1 text-xs" onClick={() => onStart(focusTaskId)} disabled={isRunning}>
-          Start
+        <button className="rounded border px-3 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => onStart(focusTaskId)} disabled={isRunning}>
+          {t("start")}
         </button>
-        <button className="rounded border px-3 py-1 text-xs" onClick={onStop} disabled={!isRunning}>
-          Stop
+        <button className="rounded border px-3 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={onStop} disabled={!isRunning}>
+          {t("stop")}
         </button>
       </div>
     </div>
@@ -363,6 +396,7 @@ function TaskDrawer({
   onClose: () => void;
   onSave: (payload: { title: string; description?: string; status: TaskStatus; priority: TaskPriority; dueDate?: string; progress: number }) => void;
 }) {
+  const { t } = useAppLang();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -374,9 +408,9 @@ function TaskDrawer({
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
       <div className="h-full w-full max-w-md overflow-y-auto bg-white p-4 dark:bg-slate-900">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Edit task</h3>
-          <button className="rounded border px-2 py-1 text-xs" onClick={onClose}>
-            Close
+          <h3 className="text-lg font-semibold">{t("editTask")}</h3>
+          <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={onClose}>
+            {t("close")}
           </button>
         </div>
         <div className="space-y-3">
@@ -384,10 +418,10 @@ function TaskDrawer({
           <textarea className="w-full rounded border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="rounded border px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
-              <option value="inbox">inbox</option>
-              <option value="todo">todo</option>
-              <option value="in_progress">in_progress</option>
-              <option value="done">done</option>
+              <option value="inbox">{t("statusInbox")}</option>
+              <option value="todo">{t("statusTodo")}</option>
+              <option value="in_progress">{t("statusInProgress")}</option>
+              <option value="done">{t("statusDone")}</option>
             </select>
             <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className="rounded border px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
               <option value="low">low</option>
@@ -398,15 +432,50 @@ function TaskDrawer({
           </div>
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full rounded border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
           <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full" />
-          <p className="text-xs text-slate-500">Progress: {progress}%</p>
+          <p className="text-xs text-slate-500">{t("progress")}: {progress}%</p>
           <button
-            className="w-full rounded bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900"
+            className="w-full rounded bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 dark:bg-violet-500"
             onClick={() => onSave({ title, description, status, priority, dueDate: dueDate || undefined, progress })}
           >
-            Save changes
+            {t("saveChanges")}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function MatrixQuadrant({
+  title,
+  tasks,
+  onDelete,
+  onToggle,
+  t,
+}: {
+  title: string;
+  tasks: TaskWithMeta[];
+  onDelete: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  onToggle: (id: string, status: TaskStatus) => void;
+  t: Translator;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-3 shadow-sm dark:border-slate-700">
+      <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+      <TaskRows tasks={tasks} onDelete={onDelete} onToggle={onToggle} t={t} />
+    </div>
+  );
+}
+
+function statusLabel(status: TaskStatus, t: Translator) {
+  if (status === "inbox") return t("statusInbox");
+  if (status === "todo") return t("statusTodo");
+  if (status === "in_progress") return t("statusInProgress");
+  return t("statusDone");
+}
+
+function priorityLabel(priority: TaskPriority, t: Translator) {
+  if (priority === "low") return t("priorityLow");
+  if (priority === "medium") return t("priorityMedium");
+  if (priority === "high") return t("priorityHigh");
+  return t("priorityUrgent");
 }

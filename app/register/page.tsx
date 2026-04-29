@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { registerUser } from "@/features/auth/actions";
+import { useAppLang } from "@/lib/use-app-lang";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useAppLang();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,20 +45,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-slate-950">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-2xl border bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <h1 className="text-2xl font-semibold">Регистрация</h1>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-100 via-violet-50 to-slate-100 p-4 dark:from-slate-950 dark:to-slate-900">
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <h1 className="text-2xl font-semibold">{t("register")}</h1>
         <div className="mt-4 space-y-3">
-          <input className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <input className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input className="w-full rounded-lg border px-3 py-2 transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800" placeholder={t("name")} value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="w-full rounded-lg border px-3 py-2 transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800" placeholder={t("email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className="w-full rounded-lg border px-3 py-2 transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800" placeholder={t("password")} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error ? <p className="mt-3 text-sm text-red-500">{error}</p> : null}
-        <button disabled={loading} className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-slate-100 dark:text-slate-900">
-          {loading ? "Создаем..." : "Создать аккаунт"}
+        <button disabled={loading} className="mt-4 w-full rounded-lg bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 disabled:opacity-70 dark:bg-violet-500 dark:text-white">
+          {loading ? t("creating") : t("createAccount")}
         </button>
         <p className="mt-3 text-sm text-slate-500">
-          Уже есть аккаунт? <Link href="/login" className="underline">Войти</Link>
+          {t("hasAccount")} <Link href="/login" className="underline">{t("signIn")}</Link>
         </p>
       </form>
     </main>

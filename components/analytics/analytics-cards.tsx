@@ -2,13 +2,17 @@
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 
+import { translate, type AppLang } from "@/lib/i18n/messages";
+
 export function AnalyticsCards({
+  lang,
   completedToday,
   completedWeek,
   completedMonth,
   overdue,
   sessions,
 }: {
+  lang: AppLang;
   completedToday: number;
   completedWeek: number;
   completedMonth: number;
@@ -16,19 +20,19 @@ export function AnalyticsCards({
   sessions: number;
 }) {
   const data = [
-    { name: "Today", value: completedToday },
-    { name: "Week", value: completedWeek },
-    { name: "Month", value: completedMonth },
+    { name: translate(lang, "today"), value: completedToday },
+    { name: translate(lang, "week"), value: completedWeek },
+    { name: translate(lang, "month"), value: completedMonth },
   ];
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Card title="Completed today" value={completedToday} />
-        <Card title="Completed week" value={completedWeek} />
-        <Card title="Completed month" value={completedMonth} />
-        <Card title="Overdue" value={overdue} />
-        <Card title="Focus sessions" value={sessions} />
+        <Card title={translate(lang, "completedToday")} value={completedToday} />
+        <Card title={translate(lang, "completedWeek")} value={completedWeek} />
+        <Card title={translate(lang, "completedMonth")} value={completedMonth} />
+        <Card title={translate(lang, "overdue")} value={overdue} />
+        <Card title={translate(lang, "focusSessions")} value={sessions} />
       </div>
       <div className="h-56 rounded-xl border p-3 dark:border-slate-700">
         <ResponsiveContainer width="100%" height="100%">
