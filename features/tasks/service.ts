@@ -51,23 +51,26 @@ export async function createTask(input: unknown) {
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       startDate: data.startDate ? new Date(data.startDate) : null,
       dueTime: data.dueTime,
+      estimateHours: data.estimateHours,
       status: data.status as TaskStatus,
       priority: data.priority as TaskPriority,
     },
   });
 
-  for (const tagName of data.tags) {
-    const tag = await prisma.tag.upsert({
-      where: { workspaceId_name: { workspaceId: ctx.workspaceId, name: tagName } },
-      update: {},
-      create: { workspaceId: ctx.workspaceId, userId: ctx.userId, name: tagName },
-    });
-    await prisma.taskTag.upsert({
-      where: { taskId_tagId: { taskId: task.id, tagId: tag.id } },
-      update: {},
-      create: { taskId: task.id, tagId: tag.id },
-    });
-  }
+  await Promise.all(
+    data.tags.map(async (tagName) => {
+      const tag = await prisma.tag.upsert({
+        where: { workspaceId_name: { workspaceId: ctx.workspaceId, name: tagName } },
+        update: {},
+        create: { workspaceId: ctx.workspaceId, userId: ctx.userId, name: tagName },
+      });
+      await prisma.taskTag.upsert({
+        where: { taskId_tagId: { taskId: task.id, tagId: tag.id } },
+        update: {},
+        create: { taskId: task.id, tagId: tag.id },
+      });
+    }),
+  );
 
   return { ok: true as const };
 }
@@ -92,6 +95,7 @@ export async function updateTask(input: unknown) {
       dueDate: data.dueDate ? new Date(data.dueDate) : task.dueDate,
       dueTime: data.dueTime ?? task.dueTime,
       startDate: data.startDate ? new Date(data.startDate) : task.startDate,
+      estimateHours: data.estimateHours ?? task.estimateHours,
       progress: data.progress ?? task.progress,
       completedPomodoros: data.completedPomodoros ?? task.completedPomodoros,
       completedAt: data.status === "done" ? new Date() : null,

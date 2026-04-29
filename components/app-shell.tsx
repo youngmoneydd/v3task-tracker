@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { useTheme } from "next-themes";
 
 import { useAppLang } from "@/lib/use-app-lang";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { setTheme } = useTheme();
   const { lang, setLang, t } = useAppLang();
 
   const navItems = [
@@ -41,17 +38,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <div className="mt-5 space-y-2">
-            <div className="flex gap-2">
-              <button className="rounded-lg border px-3 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => setTheme("light")}>
-                {t("light")}
-              </button>
-              <button className="rounded-lg border px-3 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => setTheme("dark")}>
-                {t("dark")}
-              </button>
-              <button className="rounded-lg border px-3 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => signOut({ callbackUrl: "/login" })}>
-                {t("logout")}
-              </button>
-            </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span>{t("language")}:</span>
               <button

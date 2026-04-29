@@ -22,6 +22,7 @@ type Translator = (key: MessageKey) => string;
 export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: ViewMode }) {
   const { t } = useAppLang();
   const [title, setTitle] = useState("");
+  const [estimateHours, setEstimateHours] = useState("1");
   const [selectedTask, setSelectedTask] = useState<TaskWithMeta | null>(null);
   const [smartFilter, setSmartFilter] = useState<SmartFilter>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
@@ -96,8 +97,13 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
   const createNewTask = () => {
     if (!title.trim()) return;
     startTransition(async () => {
-      await createTaskAction({ title, status: mode === "list" ? "inbox" : "todo" });
+      await createTaskAction({
+        title,
+        status: mode === "list" ? "inbox" : "todo",
+        estimateHours: Number(estimateHours) || 1,
+      });
       setTitle("");
+      setEstimateHours("1");
     });
   };
 
@@ -139,6 +145,15 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
           onChange={(event) => setTitle(event.target.value)}
           className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
           placeholder={t("quickAdd")}
+        />
+        <input
+          value={estimateHours}
+          onChange={(event) => setEstimateHours(event.target.value)}
+          type="number"
+          min={0.25}
+          step={0.25}
+          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-violet-500 focus:outline-none sm:w-36 dark:border-slate-700 dark:bg-slate-800"
+          placeholder="часы"
         />
         <button onClick={createNewTask} disabled={isPending} className="rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 disabled:opacity-70 dark:bg-violet-500">
           {t("add")}
@@ -313,6 +328,7 @@ function TaskRows({
             <div>
               <p className="font-medium">{task.title}</p>
               <p className="text-xs text-slate-500">{priorityLabel(task.priority, t)} · {statusLabel(task.status, t)}</p>
+              <p className="text-xs text-slate-400">~{task.estimateHours.toFixed(1)} ч</p>
             </div>
             <div className="flex gap-2">
               <button className="rounded border px-2 py-1 text-xs transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" onClick={() => onToggle(task.id, task.status === "done" ? "todo" : "done")}>
@@ -394,7 +410,15 @@ function TaskDrawer({
 }: {
   task: TaskWithMeta;
   onClose: () => void;
-  onSave: (payload: { title: string; description?: string; status: TaskStatus; priority: TaskPriority; dueDate?: string; progress: number }) => void;
+  onSave: (payload: {
+    title: string;
+    description?: string;
+    status: TaskStatus;
+    priority: TaskPriority;
+    dueDate?: string;
+    progress: number;
+    estimateHours: number;
+  }) => void;
 }) {
   const { t } = useAppLang();
   const [title, setTitle] = useState(task.title);
@@ -402,6 +426,7 @@ function TaskDrawer({
   const [status, setStatus] = useState<TaskStatus>(task.status);
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
   const [progress, setProgress] = useState(task.progress);
+  const [hours, setHours] = useState(String(task.estimateHours ?? 1));
   const [dueDate, setDueDate] = useState(task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : "");
 
   return (
@@ -431,11 +456,30 @@ function TaskDrawer({
             </select>
           </div>
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full rounded border px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
+          <input
+            type="number"
+            min={0.25}
+            step={0.25}
+            value={hours}
+            onChange={(e) => setHours(e.target.value)}
+            className="w-full rounded border px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+            placeholder="Оценка часов"
+          />
           <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full" />
           <p className="text-xs text-slate-500">{t("progress")}: {progress}%</p>
           <button
             className="w-full rounded bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 dark:bg-violet-500"
-            onClick={() => onSave({ title, description, status, priority, dueDate: dueDate || undefined, progress })}
+            onClick={() =>
+              onSave({
+                title,
+                description,
+                status,
+                priority,
+                dueDate: dueDate || undefined,
+                progress,
+                estimateHours: Number(hours) || 1,
+              })
+            }
           >
             {t("saveChanges")}
           </button>
