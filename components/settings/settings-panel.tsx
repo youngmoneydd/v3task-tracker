@@ -77,7 +77,7 @@ export function SettingsPanel({ email, defaults }: SettingsPanelProps) {
           <button
             onClick={saveSettings}
             disabled={isPending}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm text-white transition hover:bg-violet-500 disabled:opacity-70"
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
           >
             Сохранить настройки
           </button>

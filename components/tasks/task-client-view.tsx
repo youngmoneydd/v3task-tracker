@@ -143,7 +143,7 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
           placeholder={t("quickAdd")}
         />
         <input
@@ -152,10 +152,10 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
           type="number"
           min={0.25}
           step={0.25}
-          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-violet-500 focus:outline-none sm:w-36 dark:border-slate-700 dark:bg-slate-800"
+          className="w-full rounded-xl border px-4 py-2 text-sm transition focus:border-slate-500 focus:outline-none sm:w-36 dark:border-slate-700 dark:bg-slate-800"
           placeholder="часы"
         />
-        <button onClick={createNewTask} disabled={isPending} className="rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 disabled:opacity-70 dark:bg-violet-500">
+        <button onClick={createNewTask} disabled={isPending} className="rounded-xl bg-slate-800 px-4 py-2 text-white transition hover:bg-slate-700 disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
           {t("add")}
         </button>
       </div>
@@ -178,12 +178,12 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
           <button
             key={id}
             onClick={() => setSmartFilter(id as SmartFilter)}
-            className={`rounded-lg border px-3 py-1 text-xs transition ${smartFilter === id ? "border-violet-500 bg-violet-600 text-white dark:bg-violet-500" : "dark:border-slate-700"}`}
+            className={`rounded-lg border px-3 py-1 text-xs transition ${smartFilter === id ? "border-slate-700 bg-slate-800 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900" : "dark:border-slate-700"}`}
           >
             {label}
           </button>
         ))}
-        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
           <option value="all">{t("allProjects")}</option>
           {projectOptions.map(([id, name]) => (
             <option value={id} key={id}>
@@ -191,7 +191,7 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
             </option>
           ))}
         </select>
-        <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-violet-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
+        <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="rounded-lg border px-2 py-1 text-xs transition focus:border-slate-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800">
           <option value="all">{t("allTags")}</option>
           {tagOptions.map((name) => (
             <option value={name} key={name}>
@@ -241,7 +241,7 @@ export function TaskClientView({ tasks, mode }: { tasks: TaskWithMeta[]; mode: V
                               ref={draggable.innerRef}
                               {...draggable.draggableProps}
                               {...draggable.dragHandleProps}
-                              className="rounded-lg border border-slate-200 p-2 text-sm transition hover:border-violet-300 hover:shadow-sm dark:border-slate-700 dark:hover:border-violet-500"
+                              className="rounded-lg border border-slate-200 p-2 text-sm transition hover:border-slate-400 hover:shadow-sm dark:border-slate-700 dark:hover:border-slate-500"
                             >
                               {task.title}
                             </div>
@@ -323,7 +323,7 @@ function TaskRows({
   return (
     <div className="space-y-2">
       {tasks.map((task) => (
-        <div key={task.id} className="rounded-xl border border-slate-200 p-3 shadow-sm transition hover:border-violet-300 dark:border-slate-700 dark:hover:border-violet-500">
+        <div key={task.id} className="rounded-xl border border-slate-200 p-3 shadow-sm transition hover:border-slate-400 dark:border-slate-700 dark:hover:border-slate-500">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="font-medium">{task.title}</p>
@@ -468,7 +468,7 @@ function TaskDrawer({
           <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} className="w-full" />
           <p className="text-xs text-slate-500">{t("progress")}: {progress}%</p>
           <button
-            className="w-full rounded bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-500 dark:bg-violet-500"
+            className="w-full rounded bg-slate-800 px-4 py-2 text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             onClick={() =>
               onSave({
                 title,

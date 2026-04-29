@@ -51,7 +51,7 @@ async function main() {
       name: "Default",
       workspaceId: workspace.id,
       userId: user.id,
-      color: "#6366f1",
+      color: "#334155",
     },
   });
 

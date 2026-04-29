@@ -39,7 +39,7 @@ export function AnalyticsCards({
           <BarChart data={data}>
             <XAxis dataKey="name" />
             <Tooltip />
-            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" fill="#334155" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
